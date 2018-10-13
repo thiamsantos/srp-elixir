@@ -18,16 +18,10 @@ defmodule Srp do
   % - integer remainder
   """
 
-  def generate_salt do
-    32
-    |> :crypto.strong_rand_bytes()
-    |> Base.encode32()
-  end
-
   # x = SHA(<salt> | SHA(<username> | ":" | <raw password>))
   # <password verifier> = v = g^x % N
-  def generate_verifier(username, password, prime_size, base) do
-    salt = generate_salt()
+  def generate_verifier(username, password, prime_size) do
+    salt = :crypto.strong_rand_bytes(32)
     private_key = calculate_client_private_key(salt, username, password)
 
     {prime, generator} = get_group_parameters(prime_size)
@@ -35,10 +29,9 @@ defmodule Srp do
     password_verifier = :crypto.mod_pow(generator, private_key, prime)
 
     %{
-      username: encode(username, base),
-      salt: encode(salt, base),
-      password_verifier: encode(password_verifier, base),
-      base: base,
+      username: username,
+      salt: salt,
+      password_verifier: password_verifier,
       prime_size: prime_size
     }
   end
@@ -46,30 +39,29 @@ defmodule Srp do
   # k = SHA1(N | PAD(g))
   # b = random()
   # B = k*v + g^b % N
-  def server_key_pair(verifier, prime_size, base) do
+  def server_key_pair(verifier, prime_size) do
     {prime, generator} = get_group_parameters(prime_size)
-    private_key = rand_bytes()
-    prime_key = :crypto.hash(:sha, encode(prime, 16) <> to_string(generator))
+    private_key = :crypto.strong_rand_bytes(32)
+    prime_key = :crypto.hash(:sha, prime <> to_string(generator))
 
-    multiply = :binary.decode_unsigned(prime_key) * :binary.decode_unsigned(private_key)
+    multiply = :binary.decode_unsigned(prime_key) * :binary.decode_unsigned(verifier)
 
     public_key =
       multiply + :binary.decode_unsigned(:crypto.mod_pow(generator, private_key, prime))
 
-    IO.inspect(private_key, label: :private_key)
-    IO.inspect(public_key, label: :public_key)
-
-    %{private: encode(private_key, base), public: Integer.to_string(public_key, 16)}
+    %{private: private_key, public: :binary.encode_unsigned(public_key)}
   end
 
-  defp pow(a, b) do
-    a
-    |> :math.pow(b)
-    |> round()
-  end
-
+  # a = random()
   # A = g^a % N 
-  def client_key_pair(prime_size, base)
+  def client_key_pair(prime_size) do
+    {prime, generator} = get_group_parameters(prime_size)
+    private_key = :crypto.strong_rand_bytes(32)
+
+    public_key = :crypto.mod_pow(generator, private_key, prime)
+
+    %{private: private_key, public: public_key}
+  end
 
   # I, P = <read from user>
   # N, g, s, B = <read from server>
@@ -79,15 +71,28 @@ defmodule Srp do
   # k = SHA1(N | PAD(g))
   # x = SHA1(s | SHA1(I | ":" | P))
   # <premaster secret> = (B - (k * g^x)) ^ (a + (u * x)) % N
-  def client_premaster_secret(
-        server_public_key,
-        prime_size,
-        username,
-        password,
-        client_private_key,
-        client_public_key,
-        base
-      )
+  def client_premaster_secret(prime_size, salt, username, password, client, server) do
+    # k = SHA1(prime | PAD(generator))
+    # x = SHA1(salt | SHA1(username | ":" | password))
+    # u = SHA1(PAD(client_public) | PAD(server_public))
+    # (public_server - (k * generator ^ x)) ^ (client_private + (u * x)) % prime
+    {prime, generator} = get_group_parameters(prime_size)
+
+    first_hash = hash(prime <> to_string(generator))
+    second_hash = hash(salt <> hash(username <> ":" <> password))
+    third_hash = hash(client.public <> server.public)
+
+    first =
+      :binary.decode_unsigned(server.public) -
+        :binary.decode_unsigned(first_hash) *
+          :binary.decode_unsigned(:crypto.mod_pow(generator, second_hash, prime))
+
+    second =
+      :binary.decode_unsigned(client.private) +
+        :binary.decode_unsigned(third_hash) * :binary.decode_unsigned(second_hash)
+
+    :crypto.mod_pow(first, second, prime)
+  end
 
   # N, g, s, v = <read from password file>
   # b = random()
@@ -96,14 +101,19 @@ defmodule Srp do
   # A = <read from client>
   # u = SHA1(PAD(A) | PAD(B))
   # <premaster secret> = (A * v^u) ^ b % N
-  def server_premaster_secret(
-        verifier,
-        prime_size,
-        client_public_key,
-        server_private_key,
-        server_public_key,
-        base
-      )
+  def server_premaster_secret(prime_size, client, server, verifier) do
+    # u = SHA1(PAD(client_public) | PAD(server_public))
+    # <premaster secret> = (client_public * verifier^u) ^ server_private % prime
+
+    {prime, _generator} = get_group_parameters(prime_size)
+    first_hash = hash(client.public <> server.public)
+
+    first =
+      :binary.decode_unsigned(client.public) *
+        :binary.decode_unsigned(:crypto.mod_pow(verifier, first_hash, prime))
+
+    :crypto.mod_pow(first, server.private, prime)
+  end
 
   # SHA(<salt> | SHA(<username> | ":" | <raw password>))
   defp calculate_client_private_key(salt, username, password) do
@@ -112,34 +122,6 @@ defmodule Srp do
 
   defp hash(value) do
     :crypto.hash(:sha, value)
-  end
-
-  defp encode(value, 16) do
-    Base.encode16(value)
-  end
-
-  defp encode(value, 32) do
-    Base.encode16(value)
-  end
-
-  defp encode(value, 64) do
-    Base.encode16(value)
-  end
-
-  defp decode(value, 16) do
-    Base.decode16(value)
-  end
-
-  defp decode(value, 32) do
-    Base.decode16(value)
-  end
-
-  defp decode(value, 64) do
-    Base.decode16(value)
-  end
-
-  defp rand_bytes do
-    :crypto.strong_rand_bytes(32)
   end
 
   defp get_group_parameters(2048) do

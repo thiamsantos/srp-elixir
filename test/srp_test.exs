@@ -2,27 +2,38 @@ defmodule SrpTest do
   use ExUnit.Case
   doctest Srp
 
-  describe "generate_salt/0" do
-    test "should generate a 256 bits salt" do
-      actual = Srp.generate_salt() |> Base.decode32!() |> bit_size()
-      expected = 256
-
-      assert actual == expected
-    end
-  end
-
   describe "gen_verifier/2" do
     test "should generate an verifier" do
       prime_size = 2048
-      base = 64
 
-      verifier =
-        Srp.generate_verifier("thiago@example.com", "P@ssw0rd", prime_size, base) |> IO.inspect()
+      username = "thiago@example.com"
+      password = "P@ssw0rd"
 
-      server_keys =
-        Srp.server_key_pair(verifier.password_verifier, prime_size, base) |> IO.inspect()
+      register =
+        Srp.generate_verifier(username, password, prime_size) |> IO.inspect(label: :register)
 
-      # IO.inspect()
+      server =
+        Srp.server_key_pair(register.password_verifier, prime_size) |> IO.inspect(label: :server)
+
+      client = Srp.client_key_pair(prime_size) |> IO.inspect(label: :client)
+
+      client_premaster_secret =
+        Srp.client_premaster_secret(prime_size, register.salt, username, password, client, server)
+        |> IO.inspect(label: :client_premaster_secret)
+
+      server_premaster_secret =
+        Srp.server_premaster_secret(prime_size, client, server, register.password_verifier)
+        |> IO.inspect(label: :server_premaster_secret)
+
+      client_premaster_secret
+      |> :binary.decode_unsigned()
+      |> IO.inspect(label: :client_premaster_secret_integer)
+
+      server_premaster_secret
+      |> :binary.decode_unsigned()
+      |> IO.inspect(label: :server_premaster_secret_integer)
+
+      assert client_premaster_secret == server_premaster_secret
     end
   end
 end
