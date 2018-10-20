@@ -25,14 +25,6 @@ defmodule SrpTest do
         Srp.server_premaster_secret(prime_size, client, server, register.password_verifier)
         |> IO.inspect(label: :server_premaster_secret)
 
-      client_premaster_secret
-      |> :binary.decode_unsigned()
-      |> IO.inspect(label: :client_premaster_secret_integer)
-
-      server_premaster_secret
-      |> :binary.decode_unsigned()
-      |> IO.inspect(label: :server_premaster_secret_integer)
-
       assert client_premaster_secret == server_premaster_secret
     end
   end
