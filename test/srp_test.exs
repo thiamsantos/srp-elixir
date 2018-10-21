@@ -18,11 +18,18 @@ defmodule SrpTest do
       client = Srp.client_key_pair(prime_size) |> IO.inspect(label: :client)
 
       client_premaster_secret =
-        Srp.client_premaster_secret(prime_size, register.salt, username, password, client, server)
+        Srp.client_premaster_secret(
+          prime_size,
+          register.salt,
+          username,
+          password,
+          client,
+          server.public
+        )
         |> IO.inspect(label: :client_premaster_secret)
 
       server_premaster_secret =
-        Srp.server_premaster_secret(prime_size, client, server, register.password_verifier)
+        Srp.server_premaster_secret(prime_size, client.public, server, register.password_verifier)
         |> IO.inspect(label: :server_premaster_secret)
 
       assert client_premaster_secret == server_premaster_secret

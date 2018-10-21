@@ -168,16 +168,18 @@ defmodule SRP.Group do
   ]
 
   for {size, prime, generator} <- @groups do
-    decode_prime = prime
-    |> String.replace(~r/\s/m, "")
-    |> String.upcase()
-    |> Base.decode16!()
-    
+    decoded_prime =
+      prime
+      |> String.replace(~r/\s/m, "")
+      |> String.upcase()
+      |> Base.decode16!()
+
+    encoded_generator = :binary.encode_unsigned(generator)
+
     def get(unquote(size)) do
-      
       %__MODULE__{
-        prime: unquote(decode_prime),
-        generator: unquote(generator)
+        prime: unquote(decoded_prime),
+        generator: unquote(encoded_generator)
       }
     end
   end
