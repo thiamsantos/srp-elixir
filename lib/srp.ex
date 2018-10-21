@@ -1,4 +1,4 @@
-defmodule Srp do
+defmodule SRP do
   @moduledoc """
   Documentation for Srp.
 
@@ -19,16 +19,19 @@ defmodule Srp do
   """
 
   import SRP.Math
-
   alias SRP.{Group, KeyPair, Verifier}
+  require SRP.Group
 
   # x = SHA(<salt> | SHA(<username> | ":" | <raw password>))
   # <password verifier> = v = g^x % N
-  def generate_verifier(username, password, prime_size) do
+  @spec generate_verifier(integer(), String.t(), String.t()) :: Verifier.t()
+  def generate_verifier(prime_size, username, password)
+      when prime_size in Group.valid_sizes() and is_bitstring(username) and is_bitstring(username) and
+             is_bitstring(password) do
     %Group{prime: prime, generator: generator} = Group.get(prime_size)
 
     salt = random()
-    credentials = hash(salt <> hash(username <> ":" <> password))
+    credentials = hash(:sha512, salt <> hash(:sha512, username <> ":" <> password))
     password_verifier = mod_pow(generator, credentials, prime)
 
     %Verifier{
@@ -41,14 +44,16 @@ defmodule Srp do
   # k = SHA1(N | PAD(g))
   # b = random()
   # B = k*v + g^b % N
-  def server_key_pair(password_verifier, prime_size) do
+  @spec server_key_pair(integer(), binary()) :: KeyPair.t()
+  def server_key_pair(prime_size, password_verifier)
+      when prime_size in Group.valid_sizes() and is_binary(password_verifier) do
     %Group{prime: prime, generator: generator} = Group.get(prime_size)
 
     private_key = random()
 
     public_key =
       add(
-        mult(hash(prime <> generator), password_verifier),
+        mult(hash(:sha512, prime <> generator), password_verifier),
         mod_pow(generator, private_key, prime)
       )
 
@@ -57,7 +62,8 @@ defmodule Srp do
 
   # a = random()
   # A = g^a % N 
-  def client_key_pair(prime_size) do
+  @spec client_key_pair(integer()) :: KeyPair.t()
+  def client_key_pair(prime_size) when prime_size in Group.valid_sizes() do
     %Group{prime: prime, generator: generator} = Group.get(prime_size)
 
     private_key = random()
@@ -74,12 +80,29 @@ defmodule Srp do
   # k = SHA1(N | PAD(g))
   # x = SHA1(s | SHA1(I | ":" | P))
   # <premaster secret> = (B - (k * g^x)) ^ (a + (u * x)) % N
-  def client_premaster_secret(prime_size, salt, username, password, client, server_public_key) do
+  @spec client_premaster_secret(
+          integer(),
+          binary(),
+          String.t(),
+          String.t(),
+          KeyPair.t(),
+          binary()
+        ) :: binary()
+  def client_premaster_secret(
+        prime_size,
+        salt,
+        username,
+        password,
+        %KeyPair{} = client,
+        server_public_key
+      )
+      when prime_size in Group.valid_sizes() and is_binary(salt) and is_bitstring(username) and
+             is_bitstring(password) and is_binary(server_public_key) do
     %Group{prime: prime, generator: generator} = Group.get(prime_size)
 
-    scrambling = hash(client.public <> server_public_key)
-    multiplier = hash(prime <> generator)
-    credentials = hash(salt <> hash(username <> ":" <> password))
+    scrambling = hash(:sha512, client.public <> server_public_key)
+    multiplier = hash(:sha512, prime <> generator)
+    credentials = hash(:sha512, salt <> hash(:sha512, username <> ":" <> password))
 
     mod_pow(
       sub(server_public_key, mult(multiplier, mod_pow(generator, credentials, prime))),
@@ -95,10 +118,18 @@ defmodule Srp do
   # A = <read from client>
   # u = SHA1(PAD(A) | PAD(B))
   # <premaster secret> = (A * v^u) ^ b % N
-  def server_premaster_secret(prime_size, client_public_key, server, password_verifier) do
+  @spec server_premaster_secret(integer(), binary(), KeyPair.t(), binary()) :: binary()
+  def server_premaster_secret(
+        prime_size,
+        password_verifier,
+        %KeyPair{} = server,
+        client_public_key
+      )
+      when prime_size in Group.valid_sizes() and is_binary(password_verifier) and
+             is_binary(client_public_key) do
     %Group{prime: prime} = Group.get(prime_size)
 
-    scrambling = hash(client_public_key <> server.public)
+    scrambling = hash(:sha512, client_public_key <> server.public)
 
     mod_pow(
       mult(
@@ -114,11 +145,11 @@ defmodule Srp do
     )
   end
 
-  defp hash(value) do
-    :crypto.hash(:sha512, value)
+  defp hash(type, value) when type in [:sha224, :sha256, :sha384, :sha512, :md5, :md4] do
+    :crypto.hash(type, value)
   end
 
   defp random do
-    :crypto.strong_rand_bytes(32)
+    :crypto.strong_rand_bytes(256)
   end
 end

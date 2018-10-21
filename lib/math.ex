@@ -1,4 +1,6 @@
 defmodule SRP.Math do
+  @moduledoc false
+
   def sub(left, right) when is_binary(left) do
     sub(:binary.decode_unsigned(left), right)
   end

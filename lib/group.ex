@@ -1,4 +1,5 @@
 defmodule SRP.Group do
+  @moduledoc false
   defstruct [:prime, :generator]
 
   @groups [
@@ -167,7 +168,11 @@ defmodule SRP.Group do
     }
   ]
 
+  Module.register_attribute(__MODULE__, :valid_sizes, accumulate: true)
+
   for {size, prime, generator} <- @groups do
+    Module.put_attribute(__MODULE__, :valid_sizes, size)
+
     decoded_prime =
       prime
       |> String.replace(~r/\s/m, "")
@@ -183,4 +188,6 @@ defmodule SRP.Group do
       }
     end
   end
+
+  defmacro valid_sizes, do: @valid_sizes
 end
