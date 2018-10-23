@@ -24,14 +24,13 @@ defmodule SRP do
 
   # x = SHA(<salt> | SHA(<username> | ":" | <raw password>))
   # <password verifier> = v = g^x % N
-  @spec generate_verifier(integer(), String.t(), String.t()) :: Verifier.t()
-  def generate_verifier(prime_size, username, password)
+  @spec generate_verifier(integer(), String.t(), String.t(), binary()) :: Verifier.t()
+  def generate_verifier(prime_size, username, password, salt \\ random())
       when prime_size in Group.valid_sizes() and is_bitstring(username) and is_bitstring(username) and
-             is_bitstring(password) do
+             is_bitstring(password) and is_binary(salt) do
     %Group{prime: prime, generator: generator} = Group.get(prime_size)
 
-    salt = random()
-    credentials = hash(:sha512, salt <> hash(:sha512, username <> ":" <> password))
+    credentials = hash(:sha, salt <> hash(:sha, username <> ":" <> password))
     password_verifier = mod_pow(generator, credentials, prime)
 
     %Verifier{
@@ -44,16 +43,15 @@ defmodule SRP do
   # k = SHA1(N | PAD(g))
   # b = random()
   # B = k*v + g^b % N
-  @spec server_key_pair(integer(), binary()) :: KeyPair.t()
-  def server_key_pair(prime_size, password_verifier)
-      when prime_size in Group.valid_sizes() and is_binary(password_verifier) do
+  @spec server_key_pair(integer(), binary(), binary()) :: KeyPair.t()
+  def server_key_pair(prime_size, password_verifier, private_key \\ random())
+      when prime_size in Group.valid_sizes() and is_binary(password_verifier) and
+             is_binary(private_key) do
     %Group{prime: prime, generator: generator} = Group.get(prime_size)
-
-    private_key = random()
 
     public_key =
       add(
-        mult(hash(:sha512, prime <> generator), password_verifier),
+        mult(hash(:sha, prime <> generator), password_verifier),
         mod_pow(generator, private_key, prime)
       )
 
@@ -62,11 +60,11 @@ defmodule SRP do
 
   # a = random()
   # A = g^a % N 
-  @spec client_key_pair(integer()) :: KeyPair.t()
-  def client_key_pair(prime_size) when prime_size in Group.valid_sizes() do
+  @spec client_key_pair(integer(), binary()) :: KeyPair.t()
+  def client_key_pair(prime_size, private_key \\ random())
+      when prime_size in Group.valid_sizes() and is_binary(private_key) do
     %Group{prime: prime, generator: generator} = Group.get(prime_size)
 
-    private_key = random()
     public_key = mod_pow(generator, private_key, prime)
 
     %KeyPair{private: private_key, public: public_key}
@@ -100,9 +98,9 @@ defmodule SRP do
              is_bitstring(password) and is_binary(server_public_key) do
     %Group{prime: prime, generator: generator} = Group.get(prime_size)
 
-    scrambling = hash(:sha512, client.public <> server_public_key)
-    multiplier = hash(:sha512, prime <> generator)
-    credentials = hash(:sha512, salt <> hash(:sha512, username <> ":" <> password))
+    scrambling = hash(:sha, client.public <> server_public_key)
+    multiplier = hash(:sha, prime <> generator)
+    credentials = hash(:sha, salt <> hash(:sha, username <> ":" <> password))
 
     mod_pow(
       sub(server_public_key, mult(multiplier, mod_pow(generator, credentials, prime))),
@@ -129,7 +127,7 @@ defmodule SRP do
              is_binary(client_public_key) do
     %Group{prime: prime} = Group.get(prime_size)
 
-    scrambling = hash(:sha512, client_public_key <> server.public)
+    scrambling = hash(:sha, client_public_key <> server.public)
 
     mod_pow(
       mult(
@@ -145,7 +143,7 @@ defmodule SRP do
     )
   end
 
-  defp hash(type, value) when type in [:sha224, :sha256, :sha384, :sha512, :md5, :md4] do
+  defp hash(type, value) when type in [:sha224, :sha256, :sha384, :sha, :md5, :md4] do
     :crypto.hash(type, value)
   end
 
