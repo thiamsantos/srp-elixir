@@ -7,18 +7,15 @@ defmodule SRPTest do
 
   describe "srp" do
     test "generate same premaster key on client and server" do
-      prime_size = 1024
-
       username = "alice"
       password = "password123"
 
-      register = SRP.generate_verifier(prime_size, username, password)
-      server = SRP.server_key_pair(prime_size, register.password_verifier)
-      client = SRP.client_key_pair(prime_size)
+      register = SRP.generate_verifier(username, password)
+      server = SRP.server_key_pair(register.password_verifier)
+      client = SRP.client_key_pair()
 
       client_premaster_secret =
         SRP.client_premaster_secret(
-          prime_size,
           register.salt,
           username,
           password,
@@ -27,7 +24,7 @@ defmodule SRPTest do
         )
 
       server_premaster_secret =
-        SRP.server_premaster_secret(prime_size, register.password_verifier, server, client.public)
+        SRP.server_premaster_secret(register.password_verifier, server, client.public)
 
       assert client_premaster_secret == server_premaster_secret
     end
@@ -38,26 +35,61 @@ defmodule SRPTest do
       username = "alice"
       password = "password123"
 
-      register = SRP.generate_verifier(unquote(prime_size), username, password)
-      server = SRP.server_key_pair(unquote(prime_size), register.password_verifier)
-      client = SRP.client_key_pair(unquote(prime_size))
+      register = SRP.generate_verifier(username, password, prime_size: unquote(prime_size))
+      server = SRP.server_key_pair(register.password_verifier, prime_size: unquote(prime_size))
+      client = SRP.client_key_pair(prime_size: unquote(prime_size))
 
       client_premaster_secret =
         SRP.client_premaster_secret(
-          unquote(prime_size),
           register.salt,
           username,
           password,
           client,
-          server.public
+          server.public,
+          prime_size: unquote(prime_size)
         )
 
       server_premaster_secret =
         SRP.server_premaster_secret(
-          unquote(prime_size),
           register.password_verifier,
           server,
-          client.public
+          client.public,
+          prime_size: unquote(prime_size)
+        )
+
+      assert client_premaster_secret == server_premaster_secret
+    end
+  end
+
+  for hash_algorithm <- [:sha224, :sha256, :sha384, :sha, :md5, :md4, :sha512] do
+    test "should work with hash #{hash_algorithm} " do
+      username = "alice"
+      password = "password123"
+
+      register =
+        SRP.generate_verifier(username, password, hash_algorithm: unquote(hash_algorithm))
+
+      server =
+        SRP.server_key_pair(register.password_verifier, hash_algorithm: unquote(hash_algorithm))
+
+      client = SRP.client_key_pair(hash_algorithm: unquote(hash_algorithm))
+
+      client_premaster_secret =
+        SRP.client_premaster_secret(
+          register.salt,
+          username,
+          password,
+          client,
+          server.public,
+          hash_algorithm: unquote(hash_algorithm)
+        )
+
+      server_premaster_secret =
+        SRP.server_premaster_secret(
+          register.password_verifier,
+          server,
+          client.public,
+          hash_algorithm: unquote(hash_algorithm)
         )
 
       assert client_premaster_secret == server_premaster_secret
