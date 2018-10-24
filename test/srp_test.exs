@@ -1,5 +1,5 @@
 defmodule SRPTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   doctest SRP
 
   alias SRP.Group
