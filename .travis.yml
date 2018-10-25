@@ -1,0 +1,21 @@
+language: elixir
+
+cache:
+  directories:
+    - ~/.hex
+    - ~/.mix
+    - deps
+
+elixir:
+  - 1.5.3
+  - 1.6.6
+  - 1.7.2
+
+otp_release:
+  - 20
+  - 21
+
+script:
+  - mix format
+  - mix credo --strict
+  - mix test
