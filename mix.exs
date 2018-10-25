@@ -24,7 +24,8 @@ defmodule Srp.MixProject do
   defp deps do
     [
       {:credo, "~> 0.10.0", only: [:dev, :test], runtime: false},
-      {:excoveralls, "~> 0.10.1", only: :test}
+      {:excoveralls, "~> 0.10.1", only: :test},
+      {:inch_ex, "~> 1.0", only: [:dev, :test]}
     ]
   end
 end
