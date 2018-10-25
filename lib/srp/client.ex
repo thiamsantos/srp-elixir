@@ -1,4 +1,7 @@
 defmodule SRP.Client do
+  @moduledoc """
+  Client module.
+  """
   @callback generate_verifier(String.t(), String.t()) :: Verifier.t()
   @callback key_pair :: KeyPair.t()
   @callback premaster_secret(binary(), String.t(), String.t(), KeyPair.t(), binary()) :: binary()

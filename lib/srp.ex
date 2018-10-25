@@ -69,7 +69,7 @@ defmodule SRP do
   end
 
   # a = random()
-  # A = g^a % N 
+  # A = g^a % N
   @spec client_key_pair(Keyword.t()) :: KeyPair.t()
   def client_key_pair(options \\ []) do
     options = Keyword.merge(@default_options, options)

@@ -1,4 +1,8 @@
 defmodule SRP.Server do
+  @moduledoc """
+  Server module.
+  """
+
   @callback key_pair(binary()) :: KeyPair.t()
   @callback premaster_secret(binary(), KeyPair.t(), binary()) :: binary()
 

@@ -1,4 +1,7 @@
 defmodule SRP.KeyPair do
+  @moduledoc """
+  KeyPair module.
+  """
   @enforce_keys [:private, :public]
   defstruct [:private, :public]
 
