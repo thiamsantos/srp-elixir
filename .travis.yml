@@ -14,9 +14,13 @@ otp_release:
   - 20.3
   - 21.0
 
+before_script:
+  - mix archive.install hex sobelow --force
+
 script:
   - mix format --check-formatted
   - mix credo --strict
+  - mix sobelow
   - mix test
   - mix coveralls.travis
   - mix inch.report
