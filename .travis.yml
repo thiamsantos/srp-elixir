@@ -15,6 +15,6 @@ otp_release:
   - 21.0
 
 script:
-  - mix format
+  - mix format --check-formatted
   - mix credo --strict
   - mix test
