@@ -1,5 +1,13 @@
 # Srp
 
+[![Hex.pm](https://img.shields.io/hexpm/v/srp.svg)](https://hex.pm/packages/srp)
+[![Docs](https://img.shields.io/badge/hex-docs-green.svg)](https://hexdocs.pm/srp)
+[![Travis](https://img.shields.io/travis/thiamsantos/srp.svg)](https://travis-ci.org/thiamsantos/srp)
+[![Coverage Status](https://coveralls.io/repos/github/thiamsantos/srp/badge.svg?branch=master)](https://coveralls.io/github/thiamsantos/srp?branch=master)
+[![Inline docs](http://inch-ci.org/github/thiamsantos/srp.svg?branch=master&style=shields)](http://inch-ci.org/github/thiamsantos/srp)
+
+> Secure Remote Password Protocol implementation in elixir.
+
 **TODO: Add description**
 
 ## Installation
