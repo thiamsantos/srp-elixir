@@ -2,9 +2,9 @@
 
 [![Hex.pm](https://img.shields.io/hexpm/v/srp.svg)](https://hex.pm/packages/srp)
 [![Docs](https://img.shields.io/badge/hex-docs-green.svg)](https://hexdocs.pm/srp)
-[![Build Status](https://travis-ci.com/thiamsantos/srp.svg?branch=master)](https://travis-ci.com/thiamsantos/srp)
-[![Coverage Status](https://coveralls.io/repos/github/thiamsantos/srp/badge.svg?branch=master)](https://coveralls.io/github/thiamsantos/srp?branch=master)
-[![Inline docs](http://inch-ci.org/github/thiamsantos/srp.svg?branch=master&style=shields)](http://inch-ci.org/github/thiamsantos/srp)
+[![Build Status](https://travis-ci.com/thiamsantos/srp-elixir.svg?branch=master)](https://travis-ci.com/thiamsantos/srp-elixir)
+[![Coverage Status](https://coveralls.io/repos/github/thiamsantos/srp-elixir/badge.svg?branch=master)](https://coveralls.io/github/thiamsantos/srp-elixir?branch=master)
+[![Inline docs](http://inch-ci.org/github/thiamsantos/srp-elixir.svg?branch=master&style=shields)](http://inch-ci.org/github/thiamsantos/srp-elixir)
 
 > Secure Remote Password Protocol implementation in elixir.
 
