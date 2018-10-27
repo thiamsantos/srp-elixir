@@ -9,14 +9,16 @@ defmodule Srp.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       test_coverage: [tool: ExCoveralls],
-      preferred_cli_env: [coveralls: :test, "coveralls.travis": :test, "coveralls.html": :test]
+      preferred_cli_env: [coveralls: :test, "coveralls.travis": :test, "coveralls.html": :test],
+      name: "SRP",
+      source_url: "https://github.com/thiamsantos/srp-elixir"
     ]
   end
 
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger, :crypto]
+      extra_applications: [:crypto]
     ]
   end
 
@@ -24,8 +26,9 @@ defmodule Srp.MixProject do
   defp deps do
     [
       {:credo, "~> 0.10.0", only: [:dev, :test], runtime: false},
-      {:excoveralls, "~> 0.10.1", only: :test},
-      {:inch_ex, "~> 1.0", only: [:dev, :test]}
+      {:excoveralls, "~> 0.10.1", only: :test, runtime: false},
+      {:inch_ex, "~> 1.0", only: [:dev, :test], runtime: false},
+      {:ex_doc, "~> 0.18.0", only: :dev, runtime: false}
     ]
   end
 end
