@@ -2,23 +2,21 @@ defmodule SRPTest do
   use ExUnit.Case, async: true
   doctest SRP
 
-  alias SRP.Group
+  alias SRP.{Group, Identity}
   require SRP.Group
 
   describe "srp" do
     test "generate same premaster key on client and server" do
-      username = "alice"
-      password = "password123"
+      identity = Identity.new("alice", "password123")
 
-      register = SRP.generate_verifier(username, password)
+      register = SRP.generate_verifier(identity)
       server = SRP.server_key_pair(register.password_verifier)
       client = SRP.client_key_pair()
 
       client_premaster_secret =
         SRP.client_premaster_secret(
+          identity,
           register.salt,
-          username,
-          password,
           client,
           server.public
         )
@@ -32,18 +30,16 @@ defmodule SRPTest do
 
   for prime_size <- Group.valid_sizes() do
     test "should work with prime of #{prime_size} bits" do
-      username = "alice"
-      password = "password123"
+      identity = Identity.new("alice", "password123")
 
-      register = SRP.generate_verifier(username, password, prime_size: unquote(prime_size))
+      register = SRP.generate_verifier(identity, prime_size: unquote(prime_size))
       server = SRP.server_key_pair(register.password_verifier, prime_size: unquote(prime_size))
       client = SRP.client_key_pair(prime_size: unquote(prime_size))
 
       client_premaster_secret =
         SRP.client_premaster_secret(
+          identity,
           register.salt,
-          username,
-          password,
           client,
           server.public,
           prime_size: unquote(prime_size)
@@ -63,11 +59,9 @@ defmodule SRPTest do
 
   for hash_algorithm <- [:sha224, :sha256, :sha384, :sha, :md5, :md4, :sha512] do
     test "should work with hash #{hash_algorithm} " do
-      username = "alice"
-      password = "password123"
+      identity = Identity.new("alice", "password123")
 
-      register =
-        SRP.generate_verifier(username, password, hash_algorithm: unquote(hash_algorithm))
+      register = SRP.generate_verifier(identity, hash_algorithm: unquote(hash_algorithm))
 
       server =
         SRP.server_key_pair(register.password_verifier, hash_algorithm: unquote(hash_algorithm))
@@ -76,9 +70,8 @@ defmodule SRPTest do
 
       client_premaster_secret =
         SRP.client_premaster_secret(
+          identity,
           register.salt,
-          username,
-          password,
           client,
           server.public,
           hash_algorithm: unquote(hash_algorithm)

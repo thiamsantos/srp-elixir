@@ -1,6 +1,8 @@
 defmodule SRP.ClientTest do
   use ExUnit.Case, async: true
 
+  alias SRP.Identity
+
   defmodule SRPClient do
     use SRP.Client
   end
@@ -11,19 +13,17 @@ defmodule SRP.ClientTest do
 
   describe "support srp client" do
     test "should generate premaster key" do
-      username = "alice"
-      password = "password123"
+      identity = Identity.new("alice", "password123")
 
-      register = SRPClient.generate_verifier(username, password)
+      register = SRPClient.generate_verifier(identity)
       client = SRPClient.key_pair()
 
       server = SRP.server_key_pair(register.password_verifier)
 
       client_premaster_secret =
         SRPClient.premaster_secret(
+          identity,
           register.salt,
-          username,
-          password,
           client,
           server.public
         )
@@ -38,19 +38,16 @@ defmodule SRP.ClientTest do
   describe "support srp client with options" do
     test "should generate premaster key" do
       options = [prime_size: 8192, hash_algorithm: :sha512]
-      username = "alice"
-      password = "password123"
-
-      register = SRPClientWithOptions.generate_verifier(username, password)
+      identity = Identity.new("alice", "password123")
+      register = SRPClientWithOptions.generate_verifier(identity)
       client = SRPClientWithOptions.key_pair()
 
       server = SRP.server_key_pair(register.password_verifier, options)
 
       client_premaster_secret =
         SRPClientWithOptions.premaster_secret(
+          identity,
           register.salt,
-          username,
-          password,
           client,
           server.public
         )

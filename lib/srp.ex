@@ -70,7 +70,7 @@ defmodule SRP do
   """
 
   import SRP.Math
-  alias SRP.{Group, KeyPair, Verifier}
+  alias SRP.{Group, KeyPair, Verifier, Identity}
   require SRP.Group
 
   @default_options [prime_size: 2048, hash_algorithm: :sha]
@@ -78,41 +78,43 @@ defmodule SRP do
   @doc """
   Generate a identity verifier that should be passed to the server during account creation.
 
-
   ## Examples
 
+      iex> alice_identity = SRP.Identity.new("alice", "password123")
       iex> %SRP.Verifier{username: "alice", salt: salt, password_verifier: password_verifier} =
-      ...>   SRP.generate_verifier("alice", "password123")
+      ...>   SRP.generate_verifier(alice_identity)
       iex> is_binary(salt)
       true
       iex> is_binary(password_verifier)
       true
 
+      iex> bob_identity = SRP.Identity.new("bob", "password123")
       iex> %SRP.Verifier{username: "bob", salt: salt, password_verifier: password_verifier} =
-      ...>   SRP.generate_verifier("bob", "password123", hash_algorithm: :sha512)
+      ...>   SRP.generate_verifier(bob_identity, hash_algorithm: :sha512)
       iex> is_binary(salt)
       true
       iex> is_binary(password_verifier)
       true
 
+      iex> kirk_identity = SRP.Identity.new("kirk", "password123")
       iex> %SRP.Verifier{username: "kirk", salt: salt, password_verifier: password_verifier} =
-      ...>   SRP.generate_verifier("kirk", "password123", prime_size: 1024)
+      ...>   SRP.generate_verifier(kirk_identity, prime_size: 1024)
       iex> is_binary(salt)
       true
       iex> is_binary(password_verifier)
       true
 
+      iex> spock_identity = SRP.Identity.new("spock", "password123")
       iex> %SRP.Verifier{username: "spock", salt: salt, password_verifier: password_verifier} =
-      ...>   SRP.generate_verifier("spock", "password123", prime_size: 8192, hash_algorithm: :sha256)
+      ...>   SRP.generate_verifier(spock_identity, prime_size: 8192, hash_algorithm: :sha256)
       iex> is_binary(salt)
       true
       iex> is_binary(password_verifier)
       true
 
   """
-  @spec generate_verifier(String.t(), String.t(), Keyword.t()) :: Verifier.t()
-  def generate_verifier(username, password, options \\ [])
-      when is_bitstring(username) and is_bitstring(password) do
+  @spec generate_verifier(Identity.t(), Keyword.t()) :: Verifier.t()
+  def generate_verifier(%Identity{username: username, password: password}, options \\ []) do
     options = Keyword.merge(@default_options, options)
     prime_size = Keyword.get(options, :prime_size)
     hash_algorithm = Keyword.get(options, :hash_algorithm)
@@ -164,23 +166,20 @@ defmodule SRP do
   end
 
   @spec client_premaster_secret(
+          Identity.t(),
           binary(),
-          String.t(),
-          String.t(),
           KeyPair.t(),
           binary(),
           Keyword.t()
         ) :: binary()
   def client_premaster_secret(
+        %Identity{username: username, password: password},
         salt,
-        username,
-        password,
         %KeyPair{} = client,
         server_public_key,
         options \\ []
       )
-      when is_binary(salt) and is_bitstring(username) and is_bitstring(password) and
-             is_binary(server_public_key) do
+      when is_binary(salt) and is_binary(server_public_key) do
     options = Keyword.merge(@default_options, options)
     prime_size = Keyword.get(options, :prime_size)
     hash_algorithm = Keyword.get(options, :hash_algorithm)
