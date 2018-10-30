@@ -25,6 +25,24 @@ defmodule SRPTest do
         SRP.server_premaster_secret(register.password_verifier, server, client.public)
 
       assert client_premaster_secret == server_premaster_secret
+
+      client_proof = SRP.client_proof(client.public, server.public, client_premaster_secret)
+
+      assert SRP.valid_client_proof?(
+               client_proof,
+               client.public,
+               server.public,
+               server_premaster_secret
+             ) == true
+
+      server_proof = SRP.server_proof(client_proof, client.public, server_premaster_secret)
+
+      assert SRP.valid_server_proof?(
+               server_proof,
+               client.public,
+               server.public,
+               server_premaster_secret
+             ) == true
     end
   end
 
@@ -86,6 +104,38 @@ defmodule SRPTest do
         )
 
       assert client_premaster_secret == server_premaster_secret
+
+      client_proof =
+        SRP.client_proof(
+          client.public,
+          server.public,
+          client_premaster_secret,
+          hash_algorithm: unquote(hash_algorithm)
+        )
+
+      assert SRP.valid_client_proof?(
+               client_proof,
+               client.public,
+               server.public,
+               server_premaster_secret,
+               hash_algorithm: unquote(hash_algorithm)
+             ) == true
+
+      server_proof =
+        SRP.server_proof(
+          client_proof,
+          client.public,
+          server_premaster_secret,
+          hash_algorithm: unquote(hash_algorithm)
+        )
+
+      assert SRP.valid_server_proof?(
+               server_proof,
+               client.public,
+               server.public,
+               server_premaster_secret,
+               hash_algorithm: unquote(hash_algorithm)
+             ) == true
     end
   end
 end

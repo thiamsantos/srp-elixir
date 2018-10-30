@@ -227,6 +227,48 @@ defmodule SRP do
     )
   end
 
+  def client_proof(client_public_key, server_public_key, premaster_secret, options \\ []) do
+    options = Keyword.merge(@default_options, options)
+    hash_algorithm = Keyword.get(options, :hash_algorithm)
+
+    hash(
+      hash_algorithm,
+      client_public_key <> server_public_key <> hash(hash_algorithm, premaster_secret)
+    )
+  end
+
+  def valid_client_proof?(
+        client_proof,
+        client_public_key,
+        server_public_key,
+        premaster_secret,
+        options \\ []
+      ) do
+    client_proof == client_proof(client_public_key, server_public_key, premaster_secret, options)
+  end
+
+  def server_proof(client_proof, client_public_key, premaster_secret, options \\ []) do
+    options = Keyword.merge(@default_options, options)
+    hash_algorithm = Keyword.get(options, :hash_algorithm)
+
+    hash(
+      hash_algorithm,
+      client_public_key <> client_proof <> hash(hash_algorithm, premaster_secret)
+    )
+  end
+
+  def valid_server_proof?(
+        server_proof,
+        client_public_key,
+        server_public_key,
+        premaster_secret,
+        options \\ []
+      ) do
+    client_proof = client_proof(client_public_key, server_public_key, premaster_secret, options)
+
+    server_proof == server_proof(client_proof, client_public_key, premaster_secret, options)
+  end
+
   defp hash(type, value) when type in [:sha224, :sha256, :sha384, :sha512, :sha, :md5, :md4] do
     :crypto.hash(type, value)
   end

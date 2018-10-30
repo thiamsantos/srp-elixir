@@ -1,4 +1,7 @@
 defmodule SRP.Identity do
+  @moduledoc """
+  Identity struct.
+  """
   defstruct [:username, :password]
 
   @type t :: %__MODULE__{username: String.t(), password: String.t()}

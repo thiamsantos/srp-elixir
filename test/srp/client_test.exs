@@ -32,6 +32,24 @@ defmodule SRP.ClientTest do
         SRP.server_premaster_secret(register.password_verifier, server, client.public)
 
       assert client_premaster_secret == server_premaster_secret
+
+      client_proof = SRPClient.proof(client.public, server.public, client_premaster_secret)
+
+      assert SRP.valid_client_proof?(
+               client_proof,
+               client.public,
+               server.public,
+               server_premaster_secret
+             ) == true
+
+      server_proof = SRP.server_proof(client_proof, client.public, server_premaster_secret)
+
+      assert SRPClient.valid_server_proof?(
+               server_proof,
+               client.public,
+               server.public,
+               server_premaster_secret
+             ) == true
     end
   end
 
@@ -56,6 +74,27 @@ defmodule SRP.ClientTest do
         SRP.server_premaster_secret(register.password_verifier, server, client.public, options)
 
       assert client_premaster_secret == server_premaster_secret
+
+      client_proof =
+        SRPClientWithOptions.proof(client.public, server.public, client_premaster_secret)
+
+      assert SRP.valid_client_proof?(
+               client_proof,
+               client.public,
+               server.public,
+               server_premaster_secret,
+               options
+             ) == true
+
+      server_proof =
+        SRP.server_proof(client_proof, client.public, server_premaster_secret, options)
+
+      assert SRPClientWithOptions.valid_server_proof?(
+               server_proof,
+               client.public,
+               server.public,
+               server_premaster_secret
+             ) == true
     end
   end
 end
