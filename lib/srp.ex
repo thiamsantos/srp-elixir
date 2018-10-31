@@ -70,7 +70,7 @@ defmodule SRP do
   """
 
   import SRP.Math
-  alias SRP.{Group, KeyPair, Verifier, Identity}
+  alias SRP.{Group, Identity, KeyPair, Verifier}
   require SRP.Group
 
   @default_options [prime_size: 2048, hash_algorithm: :sha]
