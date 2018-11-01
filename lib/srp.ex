@@ -165,53 +165,129 @@ defmodule SRP do
     %KeyPair{private: private_key, public: public_key}
   end
 
-  @spec client_premaster_secret(
-          Identity.t(),
-          binary(),
-          KeyPair.t(),
-          binary(),
-          Keyword.t()
-        ) :: binary()
-  def client_premaster_secret(
-        %Identity{username: username, password: password},
+  @spec client_proof(binary(), binary(), KeyPair.t(), binary(), Keyword.t()) :: binary()
+  def client_proof(
+        %Identity{} = identity,
         salt,
-        %KeyPair{} = client,
+        %KeyPair{} = client_key_pair,
         server_public_key,
         options \\ []
+      ) do
+    premaster_secret =
+      generate_client_premaster_secret(
+        identity,
+        salt,
+        client_key_pair,
+        server_public_key,
+        options
       )
-      when is_binary(salt) and is_binary(server_public_key) do
+
+    generate_client_proof(client_key_pair.public, server_public_key, premaster_secret, options)
+  end
+
+  @spec valid_client_proof?(binary(), binary(), KeyPair.t(), binary(), Keyword.t()) :: boolean()
+  def valid_client_proof?(
+        client_proof,
+        password_verifier,
+        %KeyPair{} = server_key_pair,
+        client_public_key,
+        options \\ []
+      ) do
+    premaster_secret =
+      generate_server_premaster_secret(
+        password_verifier,
+        server_key_pair,
+        client_public_key,
+        options
+      )
+
+    client_proof ==
+      generate_client_proof(client_public_key, server_key_pair.public, premaster_secret, options)
+  end
+
+  @spec server_proof(binary(), binary(), KeyPair.t(), binary(), Keyword.t()) :: binary()
+  def server_proof(
+        client_proof,
+        password_verifier,
+        %KeyPair{} = server_key_pair,
+        client_public_key,
+        options \\ []
+      ) do
+    premaster_secret =
+      generate_server_premaster_secret(
+        password_verifier,
+        server_key_pair,
+        client_public_key,
+        options
+      )
+
+    generate_server_proof(client_proof, client_public_key, premaster_secret, options)
+  end
+
+  @spec valid_server_proof?(binary(), Identity.t(), binary(), KeyPair.t(), binary(), Keyword.t()) :: boolean()
+  def valid_server_proof?(
+        server_proof,
+        %Identity{} = identity,
+        salt,
+        %KeyPair{} = client_key_pair,
+        server_public_key,
+        options \\ []
+      ) do
+    premaster_secret =
+      generate_client_premaster_secret(
+        identity,
+        salt,
+        client_key_pair,
+        server_public_key,
+        options
+      )
+
+    client_proof =
+      generate_client_proof(client_key_pair.public, server_public_key, premaster_secret, options)
+
+    server_proof ==
+      generate_server_proof(client_proof, client_key_pair.public, premaster_secret, options)
+  end
+
+  defp generate_client_premaster_secret(
+         %Identity{username: username, password: password},
+         salt,
+         %KeyPair{} = client_key_pair,
+         server_public_key,
+         options
+       )
+       when is_binary(salt) and is_binary(server_public_key) do
     options = Keyword.merge(@default_options, options)
     prime_size = Keyword.get(options, :prime_size)
     hash_algorithm = Keyword.get(options, :hash_algorithm)
 
     %Group{prime: prime, generator: generator} = Group.get(prime_size)
 
-    scrambling = hash(hash_algorithm, client.public <> server_public_key)
+    scrambling = hash(hash_algorithm, client_key_pair.public <> server_public_key)
     multiplier = hash(hash_algorithm, prime <> generator)
     credentials = hash(hash_algorithm, salt <> hash(hash_algorithm, username <> ":" <> password))
 
     mod_pow(
       sub(server_public_key, mult(multiplier, mod_pow(generator, credentials, prime))),
-      add(client.private, mult(scrambling, credentials)),
+      add(client_key_pair.private, mult(scrambling, credentials)),
       prime
     )
   end
 
-  @spec server_premaster_secret(binary(), KeyPair.t(), binary()) :: binary()
-  def server_premaster_secret(
-        password_verifier,
-        %KeyPair{} = server,
-        client_public_key,
-        options \\ []
-      )
-      when is_binary(password_verifier) and is_binary(client_public_key) do
+  defp generate_server_premaster_secret(
+         password_verifier,
+         %KeyPair{} = server_key_pair,
+         client_public_key,
+         options
+       )
+       when is_binary(password_verifier) and is_binary(client_public_key) do
     options = Keyword.merge(@default_options, options)
     prime_size = Keyword.get(options, :prime_size)
     hash_algorithm = Keyword.get(options, :hash_algorithm)
 
     %Group{prime: prime} = Group.get(prime_size)
 
-    scrambling = hash(hash_algorithm, client_public_key <> server.public)
+    scrambling = hash(hash_algorithm, client_public_key <> server_key_pair.public)
 
     mod_pow(
       mult(
@@ -222,12 +298,17 @@ defmodule SRP do
           prime
         )
       ),
-      server.private,
+      server_key_pair.private,
       prime
     )
   end
 
-  def client_proof(client_public_key, server_public_key, premaster_secret, options \\ []) do
+  defp generate_client_proof(
+         client_public_key,
+         server_public_key,
+         premaster_secret,
+         options
+       ) do
     options = Keyword.merge(@default_options, options)
     hash_algorithm = Keyword.get(options, :hash_algorithm)
 
@@ -237,17 +318,7 @@ defmodule SRP do
     )
   end
 
-  def valid_client_proof?(
-        client_proof,
-        client_public_key,
-        server_public_key,
-        premaster_secret,
-        options \\ []
-      ) do
-    client_proof == client_proof(client_public_key, server_public_key, premaster_secret, options)
-  end
-
-  def server_proof(client_proof, client_public_key, premaster_secret, options \\ []) do
+  defp generate_server_proof(client_proof, client_public_key, premaster_secret, options) do
     options = Keyword.merge(@default_options, options)
     hash_algorithm = Keyword.get(options, :hash_algorithm)
 
@@ -255,18 +326,6 @@ defmodule SRP do
       hash_algorithm,
       client_public_key <> client_proof <> hash(hash_algorithm, premaster_secret)
     )
-  end
-
-  def valid_server_proof?(
-        server_proof,
-        client_public_key,
-        server_public_key,
-        premaster_secret,
-        options \\ []
-      ) do
-    client_proof = client_proof(client_public_key, server_public_key, premaster_secret, options)
-
-    server_proof == server_proof(client_proof, client_public_key, premaster_secret, options)
   end
 
   defp hash(type, value) when type in [:sha224, :sha256, :sha384, :sha512, :sha, :md5, :md4] do

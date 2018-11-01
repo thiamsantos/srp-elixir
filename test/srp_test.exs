@@ -10,38 +10,38 @@ defmodule SRPTest do
       identity = Identity.new("alice", "password123")
 
       register = SRP.generate_verifier(identity)
-      server = SRP.server_key_pair(register.password_verifier)
-      client = SRP.client_key_pair()
+      server_key_pair = SRP.server_key_pair(register.password_verifier)
+      client_key_pair = SRP.client_key_pair()
 
-      client_premaster_secret =
-        SRP.client_premaster_secret(
+      client_proof =
+        SRP.client_proof(
           identity,
           register.salt,
-          client,
-          server.public
+          client_key_pair,
+          server_key_pair.public
         )
-
-      server_premaster_secret =
-        SRP.server_premaster_secret(register.password_verifier, server, client.public)
-
-      assert client_premaster_secret == server_premaster_secret
-
-      client_proof = SRP.client_proof(client.public, server.public, client_premaster_secret)
 
       assert SRP.valid_client_proof?(
                client_proof,
-               client.public,
-               server.public,
-               server_premaster_secret
+               register.password_verifier,
+               server_key_pair,
+               client_key_pair.public
              ) == true
 
-      server_proof = SRP.server_proof(client_proof, client.public, server_premaster_secret)
+      server_proof =
+        SRP.server_proof(
+          client_proof,
+          register.password_verifier,
+          server_key_pair,
+          client_key_pair.public
+        )
 
       assert SRP.valid_server_proof?(
                server_proof,
-               client.public,
-               server.public,
-               server_premaster_secret
+               identity,
+               register.salt,
+               client_key_pair,
+               server_key_pair.public
              ) == true
     end
   end
@@ -50,28 +50,45 @@ defmodule SRPTest do
     test "should work with prime of #{prime_size} bits" do
       identity = Identity.new("alice", "password123")
 
-      register = SRP.generate_verifier(identity, prime_size: unquote(prime_size))
-      server = SRP.server_key_pair(register.password_verifier, prime_size: unquote(prime_size))
-      client = SRP.client_key_pair(prime_size: unquote(prime_size))
+      options = [prime_size: unquote(prime_size)]
+      register = SRP.generate_verifier(identity, options)
+      server_key_pair = SRP.server_key_pair(register.password_verifier, options)
+      client_key_pair = SRP.client_key_pair(options)
 
-      client_premaster_secret =
-        SRP.client_premaster_secret(
+      client_proof =
+        SRP.client_proof(
           identity,
           register.salt,
-          client,
-          server.public,
-          prime_size: unquote(prime_size)
+          client_key_pair,
+          server_key_pair.public,
+          options
         )
 
-      server_premaster_secret =
-        SRP.server_premaster_secret(
+      assert SRP.valid_client_proof?(
+               client_proof,
+               register.password_verifier,
+               server_key_pair,
+               client_key_pair.public,
+               options
+             ) == true
+
+      server_proof =
+        SRP.server_proof(
+          client_proof,
           register.password_verifier,
-          server,
-          client.public,
-          prime_size: unquote(prime_size)
+          server_key_pair,
+          client_key_pair.public,
+          options
         )
 
-      assert client_premaster_secret == server_premaster_secret
+      assert SRP.valid_server_proof?(
+               server_proof,
+               identity,
+               register.salt,
+               client_key_pair,
+               server_key_pair.public,
+               options
+             ) == true
     end
   end
 
@@ -79,62 +96,44 @@ defmodule SRPTest do
     test "should work with hash #{hash_algorithm} " do
       identity = Identity.new("alice", "password123")
 
-      register = SRP.generate_verifier(identity, hash_algorithm: unquote(hash_algorithm))
-
-      server =
-        SRP.server_key_pair(register.password_verifier, hash_algorithm: unquote(hash_algorithm))
-
-      client = SRP.client_key_pair(hash_algorithm: unquote(hash_algorithm))
-
-      client_premaster_secret =
-        SRP.client_premaster_secret(
-          identity,
-          register.salt,
-          client,
-          server.public,
-          hash_algorithm: unquote(hash_algorithm)
-        )
-
-      server_premaster_secret =
-        SRP.server_premaster_secret(
-          register.password_verifier,
-          server,
-          client.public,
-          hash_algorithm: unquote(hash_algorithm)
-        )
-
-      assert client_premaster_secret == server_premaster_secret
+      options = [hash_algorithm: unquote(hash_algorithm)]
+      register = SRP.generate_verifier(identity, options)
+      server_key_pair = SRP.server_key_pair(register.password_verifier, options)
+      client_key_pair = SRP.client_key_pair(options)
 
       client_proof =
         SRP.client_proof(
-          client.public,
-          server.public,
-          client_premaster_secret,
-          hash_algorithm: unquote(hash_algorithm)
+          identity,
+          register.salt,
+          client_key_pair,
+          server_key_pair.public,
+          options
         )
 
       assert SRP.valid_client_proof?(
                client_proof,
-               client.public,
-               server.public,
-               server_premaster_secret,
-               hash_algorithm: unquote(hash_algorithm)
+               register.password_verifier,
+               server_key_pair,
+               client_key_pair.public,
+               options
              ) == true
 
       server_proof =
         SRP.server_proof(
           client_proof,
-          client.public,
-          server_premaster_secret,
-          hash_algorithm: unquote(hash_algorithm)
+          register.password_verifier,
+          server_key_pair,
+          client_key_pair.public,
+          options
         )
 
       assert SRP.valid_server_proof?(
                server_proof,
-               client.public,
-               server.public,
-               server_premaster_secret,
-               hash_algorithm: unquote(hash_algorithm)
+               identity,
+               register.salt,
+               client_key_pair,
+               server_key_pair.public,
+               options
              ) == true
     end
   end

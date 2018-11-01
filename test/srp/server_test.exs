@@ -16,39 +16,38 @@ defmodule SRP.ServerTest do
       identity = Identity.new("alice", "password123")
 
       register = SRP.generate_verifier(identity)
-      client = SRP.client_key_pair()
+      client_key_pair = SRP.client_key_pair()
+      server_key_pair = SRPServer.key_pair(register.password_verifier)
 
-      server = SRPServer.key_pair(register.password_verifier)
-
-      client_premaster_secret =
-        SRP.client_premaster_secret(
+      client_proof =
+        SRP.client_proof(
           identity,
           register.salt,
-          client,
-          server.public
+          client_key_pair,
+          server_key_pair.public
         )
-
-      server_premaster_secret =
-        SRPServer.premaster_secret(register.password_verifier, server, client.public)
-
-      assert client_premaster_secret == server_premaster_secret
-
-      client_proof = SRP.client_proof(client.public, server.public, client_premaster_secret)
 
       assert SRPServer.valid_client_proof?(
                client_proof,
-               client.public,
-               server.public,
-               server_premaster_secret
+               register.password_verifier,
+               server_key_pair,
+               client_key_pair.public
              ) == true
 
-      server_proof = SRPServer.proof(client_proof, client.public, server_premaster_secret)
+      server_proof =
+        SRPServer.proof(
+          client_proof,
+          register.password_verifier,
+          server_key_pair,
+          client_key_pair.public
+        )
 
       assert SRP.valid_server_proof?(
                server_proof,
-               client.public,
-               server.public,
-               server_premaster_secret
+               identity,
+               register.salt,
+               client_key_pair,
+               server_key_pair.public
              ) == true
     end
   end
@@ -59,42 +58,39 @@ defmodule SRP.ServerTest do
       identity = Identity.new("alice", "password123")
 
       register = SRP.generate_verifier(identity, options)
-      client = SRP.client_key_pair(options)
+      client_key_pair = SRP.client_key_pair(options)
+      server_key_pair = SRPServerWithOptions.key_pair(register.password_verifier)
 
-      server = SRPServerWithOptions.key_pair(register.password_verifier)
-
-      client_premaster_secret =
-        SRP.client_premaster_secret(
+      client_proof =
+        SRP.client_proof(
           identity,
           register.salt,
-          client,
-          server.public,
+          client_key_pair,
+          server_key_pair.public,
           options
         )
 
-      server_premaster_secret =
-        SRPServerWithOptions.premaster_secret(register.password_verifier, server, client.public)
-
-      assert client_premaster_secret == server_premaster_secret
-
-      client_proof =
-        SRP.client_proof(client.public, server.public, client_premaster_secret, options)
-
       assert SRPServerWithOptions.valid_client_proof?(
                client_proof,
-               client.public,
-               server.public,
-               server_premaster_secret
+               register.password_verifier,
+               server_key_pair,
+               client_key_pair.public
              ) == true
 
       server_proof =
-        SRPServerWithOptions.proof(client_proof, client.public, server_premaster_secret)
+        SRPServerWithOptions.proof(
+          client_proof,
+          register.password_verifier,
+          server_key_pair,
+          client_key_pair.public
+        )
 
       assert SRP.valid_server_proof?(
                server_proof,
-               client.public,
-               server.public,
-               server_premaster_secret,
+               identity,
+               register.salt,
+               client_key_pair,
+               server_key_pair.public,
                options
              ) == true
     end
