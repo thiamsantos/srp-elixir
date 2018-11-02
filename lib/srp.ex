@@ -224,7 +224,8 @@ defmodule SRP do
     generate_server_proof(client_proof, client_public_key, premaster_secret, options)
   end
 
-  @spec valid_server_proof?(binary(), Identity.t(), binary(), KeyPair.t(), binary(), Keyword.t()) :: boolean()
+  @spec valid_server_proof?(binary(), Identity.t(), binary(), KeyPair.t(), binary(), Keyword.t()) ::
+          boolean()
   def valid_server_proof?(
         server_proof,
         %Identity{} = identity,

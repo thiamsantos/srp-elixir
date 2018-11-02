@@ -27,7 +27,8 @@ defmodule Srp.MixProject do
     [
       {:credo, "~> 0.10.0", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.10.1", only: :test, runtime: false},
-      {:ex_doc, "~> 0.18.0", only: :dev, runtime: false}
+      {:ex_doc, "~> 0.18.0", only: :dev, runtime: false},
+      {:stream_data, "~> 0.4.2", only: :test}
     ]
   end
 end

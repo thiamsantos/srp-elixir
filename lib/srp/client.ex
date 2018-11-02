@@ -5,7 +5,8 @@ defmodule SRP.Client do
   @callback generate_verifier(Identity.t()) :: Verifier.t()
   @callback key_pair :: KeyPair.t()
   @callback proof(binary(), binary(), KeyPair.t(), binary()) :: binary()
-  @callback valid_server_proof?(binary(), Identity.t(), binary(), KeyPair.t(), binary()) :: boolean()
+  @callback valid_server_proof?(binary(), Identity.t(), binary(), KeyPair.t(), binary()) ::
+              boolean()
 
   defmacro __using__(opts) do
     quote do
