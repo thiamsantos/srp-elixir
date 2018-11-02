@@ -13,6 +13,27 @@ defmodule SRP do
   - authenticate both the identity of the client and the server to guarantee
     that a client isn’t communicating with an impostor server.
 
+  ## Signing up
+
+  After the user provides his username and password, the client must generate
+  a password verifier. Then it must send to the server:
+
+  - The username for future identification.
+  - The password verifier that will be used in the future to verify the client credentials.
+  - The salt used in the process.
+
+  ```elixir
+  username = "alice"
+  password = "password123"
+
+  identity = SRP.Identity.new(username, password)
+  %SRP.IdentityVerifier{username: username, salt: salt, password_verifier: password_verifier} =
+    SRP.generate_verifier(identity)
+
+  # Send to the server -> username + salt + password_verifier
+  # Server stores the information
+  ```
+
   ## Prime Groups
 
   The default prime size is 2048. Each prime group contains a large prime and a generator.
