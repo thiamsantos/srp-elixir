@@ -11,7 +11,8 @@ defmodule SRP.IdentityVerifier do
   @type t :: %__MODULE__{username: String.t(), salt: binary(), password_verifier: binary()}
 
   @doc false
-  def new(username, salt, password_verifier) when is_binary(username) and is_binary(salt) and is_binary(password_verifier) do
+  def new(username, salt, password_verifier)
+      when is_binary(username) and is_binary(salt) and is_binary(password_verifier) do
     %__MODULE__{
       username: username,
       salt: salt,
