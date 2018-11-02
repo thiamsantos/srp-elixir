@@ -2,7 +2,7 @@ defmodule SRP.Client do
   @moduledoc """
   Client module.
   """
-  @callback generate_verifier(Identity.t()) :: Verifier.t()
+  @callback generate_verifier(Identity.t()) :: IdentityVerifier.t()
   @callback key_pair :: KeyPair.t()
   @callback proof(binary(), binary(), KeyPair.t(), binary()) :: binary()
   @callback valid_server_proof?(binary(), Identity.t(), binary(), KeyPair.t(), binary()) ::

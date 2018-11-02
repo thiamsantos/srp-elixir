@@ -3,6 +3,8 @@ defmodule SRP.ServerTest do
 
   alias SRP.Identity
 
+  doctest SRP.Server
+
   defmodule SRPServer do
     use SRP.Server
   end

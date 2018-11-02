@@ -1,8 +1,9 @@
 defmodule SRP do
   @moduledoc """
   SRP implements the Secure Remote Password Protocol presented on
-  [The SRP Authentication and Key Exchange System](https://tools.ietf.org/html/rfc2945)
-  and [Using the Secure Remote Password (SRP) Protocol for TLS Authentication](https://tools.ietf.org/html/rfc5054).
+  [The SRP Authentication and Key Exchange System](https://tools.ietf.org/html/rfc2945),
+  [Using the Secure Remote Password (SRP) Protocol for TLS Authentication](https://tools.ietf.org/html/rfc5054)
+  and [The Secure Remote Password Protocol](http://srp.stanford.edu/ndss.html).
 
   The protocol provides a way to do zero-knowledge authentication between client and servers.
   By using the SRP protocol you can:
@@ -70,7 +71,7 @@ defmodule SRP do
   """
 
   import SRP.Math
-  alias SRP.{Group, Identity, KeyPair, Verifier}
+  alias SRP.{Group, Identity, KeyPair, IdentityVerifier}
   require SRP.Group
 
   @default_options [prime_size: 2048, hash_algorithm: :sha]
@@ -81,7 +82,7 @@ defmodule SRP do
   ## Examples
 
       iex> alice_identity = SRP.Identity.new("alice", "password123")
-      iex> %SRP.Verifier{username: "alice", salt: salt, password_verifier: password_verifier} =
+      iex> %SRP.IdentityVerifier{username: "alice", salt: salt, password_verifier: password_verifier} =
       ...>   SRP.generate_verifier(alice_identity)
       iex> is_binary(salt)
       true
@@ -89,7 +90,7 @@ defmodule SRP do
       true
 
       iex> bob_identity = SRP.Identity.new("bob", "password123")
-      iex> %SRP.Verifier{username: "bob", salt: salt, password_verifier: password_verifier} =
+      iex> %SRP.IdentityVerifier{username: "bob", salt: salt, password_verifier: password_verifier} =
       ...>   SRP.generate_verifier(bob_identity, hash_algorithm: :sha512)
       iex> is_binary(salt)
       true
@@ -97,7 +98,7 @@ defmodule SRP do
       true
 
       iex> kirk_identity = SRP.Identity.new("kirk", "password123")
-      iex> %SRP.Verifier{username: "kirk", salt: salt, password_verifier: password_verifier} =
+      iex> %SRP.IdentityVerifier{username: "kirk", salt: salt, password_verifier: password_verifier} =
       ...>   SRP.generate_verifier(kirk_identity, prime_size: 1024)
       iex> is_binary(salt)
       true
@@ -105,7 +106,7 @@ defmodule SRP do
       true
 
       iex> spock_identity = SRP.Identity.new("spock", "password123")
-      iex> %SRP.Verifier{username: "spock", salt: salt, password_verifier: password_verifier} =
+      iex> %SRP.IdentityVerifier{username: "spock", salt: salt, password_verifier: password_verifier} =
       ...>   SRP.generate_verifier(spock_identity, prime_size: 8192, hash_algorithm: :sha256)
       iex> is_binary(salt)
       true
@@ -113,7 +114,7 @@ defmodule SRP do
       true
 
   """
-  @spec generate_verifier(Identity.t(), Keyword.t()) :: Verifier.t()
+  @spec generate_verifier(Identity.t(), Keyword.t()) :: IdentityVerifier.t()
   def generate_verifier(%Identity{username: username, password: password}, options \\ []) do
     options = Keyword.merge(@default_options, options)
     prime_size = Keyword.get(options, :prime_size)
@@ -125,11 +126,7 @@ defmodule SRP do
     credentials = hash(hash_algorithm, salt <> hash(hash_algorithm, username <> ":" <> password))
     password_verifier = mod_pow(generator, credentials, prime)
 
-    %Verifier{
-      username: username,
-      salt: salt,
-      password_verifier: password_verifier
-    }
+    IdentityVerifier.new(username, salt, password_verifier)
   end
 
   @spec server_key_pair(binary(), Keyword.t()) :: KeyPair.t()

@@ -3,6 +3,8 @@ defmodule SRP.ClientTest do
 
   alias SRP.Identity
 
+  doctest SRP.Client
+
   defmodule SRPClient do
     use SRP.Client
   end
