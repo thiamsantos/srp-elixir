@@ -1,6 +1,6 @@
 defmodule SRP do
   @moduledoc """
-  SRP implements the Secure Remote Password Protocol presented on
+  SRP provides a implementation of the Secure Remote Password Protocol presented on
   [The SRP Authentication and Key Exchange System](https://tools.ietf.org/html/rfc2945),
   [Using the Secure Remote Password (SRP) Protocol for TLS Authentication](https://tools.ietf.org/html/rfc5054)
   and [The Secure Remote Password Protocol](http://srp.stanford.edu/ndss.html).
