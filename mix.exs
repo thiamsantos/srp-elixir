@@ -4,7 +4,7 @@ defmodule Srp.MixProject do
   def project do
     [
       app: :srp,
-      version: "0.1.0",
+      version: "0.1.1",
       elixir: "~> 1.6",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
@@ -12,7 +12,9 @@ defmodule Srp.MixProject do
       preferred_cli_env: [coveralls: :test, "coveralls.travis": :test, "coveralls.html": :test],
       name: "SRP",
       source_url: "https://github.com/thiamsantos/srp-elixir",
-      docs: docs()
+      docs: docs(),
+      package: package(),
+      description: "Implementation of the Secure Remote Password Protocol"
     ]
   end
 
@@ -25,6 +27,14 @@ defmodule Srp.MixProject do
   defp docs do
     [
       main: "SRP"
+    ]
+  end
+
+  defp package do
+    [
+      name: "srp",
+      licenses: ["Apache 2.0"],
+      links: %{"GitHub" => "https://github.com/thiamsantos/srp-elixir"}
     ]
   end
 
