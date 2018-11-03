@@ -225,6 +225,43 @@ defmodule SRP do
 
   @doc """
   Generate a ephemeral key pair for the server.
+  The private key is randomly generated, and the public key is
+  derived from the private key and the password verifier.
+
+  ## Examples
+
+      iex> password_verifier = Base.decode16!("BEB25379D1A8581EB5A727673A2441EE")
+      iex> %SRP.KeyPair{public: public_key, private: private_key} =
+      ...>   SRP.server_key_pair(password_verifier)
+      iex> is_binary(public_key)
+      true
+      iex> is_binary(private_key)
+      true
+
+      iex> password_verifier = Base.decode16!("BEB25379D1A8581EB5A727673A2441EE")
+      iex> %SRP.KeyPair{public: public_key, private: private_key} =
+      ...>   SRP.server_key_pair(password_verifier, hash_algorithm: :sha512)
+      iex> is_binary(public_key)
+      true
+      iex> is_binary(private_key)
+      true
+
+      iex> password_verifier = Base.decode16!("BEB25379D1A8581EB5A727673A2441EE")
+      iex> %SRP.KeyPair{public: public_key, private: private_key} =
+      ...>   SRP.server_key_pair(password_verifier, prime_size: 1024)
+      iex> is_binary(public_key)
+      true
+      iex> is_binary(private_key)
+      true
+
+      iex> password_verifier = Base.decode16!("BEB25379D1A8581EB5A727673A2441EE")
+      iex> %SRP.KeyPair{public: public_key, private: private_key} =
+      ...>   SRP.server_key_pair(password_verifier, prime_size: 8192, hash_algorithm: :sha256)
+      iex> is_binary(public_key)
+      true
+      iex> is_binary(private_key)
+      true
+
   """
   @spec server_key_pair(binary(), Keyword.t()) :: KeyPair.t()
   def server_key_pair(password_verifier, options \\ []) when is_binary(password_verifier) do
@@ -248,6 +285,39 @@ defmodule SRP do
 
   @doc """
   Generate a ephemeral key pair for the client.
+  The private key is randomly generated and
+  then the public key is derived from the private key.
+
+  ## Examples
+
+      iex> %SRP.KeyPair{public: public_key, private: private_key} =
+      ...>   SRP.client_key_pair()
+      iex> is_binary(public_key)
+      true
+      iex> is_binary(private_key)
+      true
+
+      iex> %SRP.KeyPair{public: public_key, private: private_key} =
+      ...>   SRP.client_key_pair(hash_algorithm: :sha512)
+      iex> is_binary(public_key)
+      true
+      iex> is_binary(private_key)
+      true
+
+      iex> %SRP.KeyPair{public: public_key, private: private_key} =
+      ...>   SRP.client_key_pair(prime_size: 1024)
+      iex> is_binary(public_key)
+      true
+      iex> is_binary(private_key)
+      true
+
+      iex> %SRP.KeyPair{public: public_key, private: private_key} =
+      ...>   SRP.client_key_pair(prime_size: 8192, hash_algorithm: :sha256)
+      iex> is_binary(public_key)
+      true
+      iex> is_binary(private_key)
+      true
+
   """
   @spec client_key_pair(Keyword.t()) :: KeyPair.t()
   def client_key_pair(options \\ []) do
@@ -264,6 +334,23 @@ defmodule SRP do
 
   @doc """
   Generate a proof of identity for the client.
+
+  ## Examples
+
+      iex> identity = SRP.new_identity("bob", "password123")
+      iex> identity_verifier = SRP.generate_verifier(identity)
+      iex> client_key_pair = SRP.client_key_pair()
+      iex> server_key_pair = SRP.server_key_pair(identity_verifier.password_verifier)
+      iex> proof =
+      ...>   SRP.client_proof(
+      ...>     identity,
+      ...>     identity_verifier.salt,
+      ...>     client_key_pair,
+      ...>     server_key_pair.public
+      ...>   )
+      iex> is_binary(proof)
+      true
+
   """
   @spec client_proof(binary(), binary(), KeyPair.t(), binary(), Keyword.t()) :: binary()
   def client_proof(
@@ -287,6 +374,28 @@ defmodule SRP do
 
   @doc """
   Validate the client's proof of identity.
+
+  ## Examples
+
+      iex> identity = SRP.new_identity("bob", "password123")
+      iex> identity_verifier = SRP.generate_verifier(identity)
+      iex> client_key_pair = SRP.client_key_pair()
+      iex> server_key_pair = SRP.server_key_pair(identity_verifier.password_verifier)
+      iex> client_proof =
+      ...>  SRP.client_proof(
+      ...>    identity,
+      ...>    identity_verifier.salt,
+      ...>    client_key_pair,
+      ...>    server_key_pair.public
+      ...>  )
+      iex> SRP.valid_client_proof?(
+      ...>   client_proof,
+      ...>   identity_verifier.password_verifier,
+      ...>   server_key_pair,
+      ...>   client_key_pair.public
+      ...> )
+      true
+
   """
   @spec valid_client_proof?(binary(), binary(), KeyPair.t(), binary(), Keyword.t()) :: boolean()
   def valid_client_proof?(
@@ -310,6 +419,30 @@ defmodule SRP do
 
   @doc """
   Generate a proof of identity for the server.
+
+  ## Examples
+
+      iex> identity = SRP.new_identity("bob", "password123")
+      iex> identity_verifier = SRP.generate_verifier(identity)
+      iex> client_key_pair = SRP.client_key_pair()
+      iex> server_key_pair = SRP.server_key_pair(identity_verifier.password_verifier)
+      iex> client_proof =
+      ...>   SRP.client_proof(
+      ...>     identity,
+      ...>     identity_verifier.salt,
+      ...>     client_key_pair,
+      ...>     server_key_pair.public
+      ...>   )
+      iex> server_proof =
+      ...>   SRP.server_proof(
+      ...>     client_proof,
+      ...>     identity_verifier.password_verifier,
+      ...>     server_key_pair,
+      ...>     client_key_pair.public
+      ...>   )
+      iex> is_binary(server_proof)
+      true
+
   """
   @spec server_proof(binary(), binary(), KeyPair.t(), binary(), Keyword.t()) :: binary()
   def server_proof(
@@ -332,6 +465,36 @@ defmodule SRP do
 
   @doc """
   Validate the server's proof of identity.
+
+  ## Examples
+
+      iex> identity = SRP.new_identity("bob", "password123")
+      iex> identity_verifier = SRP.generate_verifier(identity)
+      iex> client_key_pair = SRP.client_key_pair()
+      iex> server_key_pair = SRP.server_key_pair(identity_verifier.password_verifier)
+      iex> client_proof =
+      ...>   SRP.client_proof(
+      ...>     identity,
+      ...>     identity_verifier.salt,
+      ...>     client_key_pair,
+      ...>     server_key_pair.public
+      ...>   )
+      iex> server_proof =
+      ...>   SRP.server_proof(
+      ...>     client_proof,
+      ...>     identity_verifier.password_verifier,
+      ...>     server_key_pair,
+      ...>     client_key_pair.public
+      ...>   )
+      iex> SRP.valid_server_proof?(
+      ...>   server_proof,
+      ...>   identity,
+      ...>   identity_verifier.salt,
+      ...>   client_key_pair,
+      ...>   server_key_pair.public
+      ...> )
+      true
+
   """
   @spec valid_server_proof?(binary(), Identity.t(), binary(), KeyPair.t(), binary(), Keyword.t()) ::
           boolean()
