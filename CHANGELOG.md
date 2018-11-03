@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## 0.1.0 - 2018-11-03
 ### Added
 - Documentation.
 - This CHANGELOG file.
@@ -20,6 +22,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Function `valid_server_proof?/6`.
 - Support all prime group from [RFC 5054].
 
-[Unreleased]: https://github.com/thiamsantos/srp-elixir/compare/HEAD...HEAD
+[Unreleased]: https://github.com/thiamsantos/srp-elixir/compare/v0.1.0...HEAD
 [stream_data]: https://hex.pm/packages/stream_data
 [RFC 5054]: https://tools.ietf.org/html/rfc5054
