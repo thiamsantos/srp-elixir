@@ -47,6 +47,7 @@ defmodule SRPTest do
     end
   end
 
+  @tag :property
   describe "property tests" do
     property "srp" do
       check all username <- StreamData.string(:alphanumeric),

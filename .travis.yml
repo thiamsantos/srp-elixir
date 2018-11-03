@@ -17,5 +17,5 @@ otp_release:
 script:
   - mix format --check-formatted
   - mix credo --strict
-  - mix test
+  - mix test --exclude property
   - mix coveralls.travis
