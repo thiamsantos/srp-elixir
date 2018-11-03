@@ -11,18 +11,23 @@ defmodule Srp.MixProject do
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: [coveralls: :test, "coveralls.travis": :test, "coveralls.html": :test],
       name: "SRP",
-      source_url: "https://github.com/thiamsantos/srp-elixir"
+      source_url: "https://github.com/thiamsantos/srp-elixir",
+      docs: docs()
     ]
   end
 
-  # Run "mix help compile.app" to learn about applications.
   def application do
     [
       extra_applications: [:crypto]
     ]
   end
 
-  # Run "mix help deps" to learn about dependencies.
+  defp docs do
+    [
+      main: "SRP"
+    ]
+  end
+
   defp deps do
     [
       {:credo, "~> 0.10.0", only: [:dev, :test], runtime: false},

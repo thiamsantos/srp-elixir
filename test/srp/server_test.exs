@@ -1,8 +1,6 @@
 defmodule SRP.ServerTest do
   use ExUnit.Case, async: true
 
-  alias SRP.Identity
-
   doctest SRP.Server
 
   defmodule SRPServer do
@@ -15,7 +13,7 @@ defmodule SRP.ServerTest do
 
   describe "support srp client" do
     test "should generate premaster key" do
-      identity = Identity.new("alice", "password123")
+      identity = SRP.new_identity("alice", "password123")
 
       register = SRP.generate_verifier(identity)
       client_key_pair = SRP.client_key_pair()
@@ -57,7 +55,7 @@ defmodule SRP.ServerTest do
   describe "support srp client with options" do
     test "should generate premaster key" do
       options = [prime_size: 8192, hash_algorithm: :sha512]
-      identity = Identity.new("alice", "password123")
+      identity = SRP.new_identity("alice", "password123")
 
       register = SRP.generate_verifier(identity, options)
       client_key_pair = SRP.client_key_pair(options)

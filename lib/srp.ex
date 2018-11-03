@@ -26,7 +26,7 @@ defmodule SRP do
   username = "alice"
   password = "password123"
 
-  identity = SRP.Identity.new(username, password)
+  identity = SRP.new_identity(username, password)
   %SRP.IdentityVerifier{username: username, salt: salt, password_verifier: password_verifier} =
     SRP.generate_verifier(identity)
 
@@ -53,7 +53,7 @@ defmodule SRP do
   If the username does not exist the server can send a fake value.
   It is important to not reveal if an username is registered on the system or not.
   An attacker could use the login to find the registered usernames
-  and try a dictionary attack specify for those users.
+  and try a dictionary attack specific for those users.
 
   3. The client generates a key pair and a client proof of identity.
   Then the client sends to the server the proof and the client's public key.
@@ -61,7 +61,7 @@ defmodule SRP do
   ```elixir
   # receives from the server the server_public_key and the salt.
 
-  identity = SRP.Identity.new(username, password)
+  identity = SRP.new_identity(username, password)
   key_pair = SRP.client_key_pair()
   proof = SRP.client_proof(identity, salt, key_pair, server_public_key)
 
@@ -85,7 +85,7 @@ defmodule SRP do
   This step can be skipped if you don't feel the need to verify the server's identity.
 
   ```elixir
-  identity = SRP.Identity.new(username, password)
+  identity = SRP.new_identity(username, password)
   valid? = SRP.valid_server_proof?(server_proof, identity, salt, client_key_pair, server_public_key)
   ```
 
@@ -159,7 +159,7 @@ defmodule SRP do
 
   ## Examples
 
-      iex> alice_identity = SRP.Identity.new("alice", "password123")
+      iex> alice_identity = SRP.new_identity("alice", "password123")
       iex> %SRP.IdentityVerifier{username: "alice", salt: salt, password_verifier: password_verifier} =
       ...>   SRP.generate_verifier(alice_identity)
       iex> is_binary(salt)
@@ -167,7 +167,7 @@ defmodule SRP do
       iex> is_binary(password_verifier)
       true
 
-      iex> bob_identity = SRP.Identity.new("bob", "password123")
+      iex> bob_identity = SRP.new_identity("bob", "password123")
       iex> %SRP.IdentityVerifier{username: "bob", salt: salt, password_verifier: password_verifier} =
       ...>   SRP.generate_verifier(bob_identity, hash_algorithm: :sha512)
       iex> is_binary(salt)
@@ -175,7 +175,7 @@ defmodule SRP do
       iex> is_binary(password_verifier)
       true
 
-      iex> kirk_identity = SRP.Identity.new("kirk", "password123")
+      iex> kirk_identity = SRP.new_identity("kirk", "password123")
       iex> %SRP.IdentityVerifier{username: "kirk", salt: salt, password_verifier: password_verifier} =
       ...>   SRP.generate_verifier(kirk_identity, prime_size: 1024)
       iex> is_binary(salt)
@@ -183,7 +183,7 @@ defmodule SRP do
       iex> is_binary(password_verifier)
       true
 
-      iex> spock_identity = SRP.Identity.new("spock", "password123")
+      iex> spock_identity = SRP.new_identity("spock", "password123")
       iex> %SRP.IdentityVerifier{username: "spock", salt: salt, password_verifier: password_verifier} =
       ...>   SRP.generate_verifier(spock_identity, prime_size: 8192, hash_algorithm: :sha256)
       iex> is_binary(salt)
@@ -207,6 +207,25 @@ defmodule SRP do
     IdentityVerifier.new(username, salt, password_verifier)
   end
 
+  @doc """
+  Create a new `SRP.Identity` struct.
+
+  ## Examples
+
+      iex> SRP.new_identity("alice", "password123")
+      %SRP.Identity{username: "alice", password: "password123"}
+
+  """
+  def new_identity(username, password) when is_binary(username) and is_binary(password) do
+    %Identity{
+      username: username,
+      password: password
+    }
+  end
+
+  @doc """
+  Generate a ephemeral key pair for the server.
+  """
   @spec server_key_pair(binary(), Keyword.t()) :: KeyPair.t()
   def server_key_pair(password_verifier, options \\ []) when is_binary(password_verifier) do
     options = Keyword.merge(@default_options, options)
@@ -227,6 +246,9 @@ defmodule SRP do
     %KeyPair{private: private_key, public: :binary.encode_unsigned(public_key)}
   end
 
+  @doc """
+  Generate a ephemeral key pair for the client.
+  """
   @spec client_key_pair(Keyword.t()) :: KeyPair.t()
   def client_key_pair(options \\ []) do
     options = Keyword.merge(@default_options, options)
@@ -240,6 +262,9 @@ defmodule SRP do
     %KeyPair{private: private_key, public: public_key}
   end
 
+  @doc """
+  Generate a proof of identity for the client.
+  """
   @spec client_proof(binary(), binary(), KeyPair.t(), binary(), Keyword.t()) :: binary()
   def client_proof(
         %Identity{} = identity,
@@ -260,6 +285,9 @@ defmodule SRP do
     generate_client_proof(client_key_pair.public, server_public_key, premaster_secret, options)
   end
 
+  @doc """
+  Validate the client's proof of identity.
+  """
   @spec valid_client_proof?(binary(), binary(), KeyPair.t(), binary(), Keyword.t()) :: boolean()
   def valid_client_proof?(
         client_proof,
@@ -280,6 +308,9 @@ defmodule SRP do
       generate_client_proof(client_public_key, server_key_pair.public, premaster_secret, options)
   end
 
+  @doc """
+  Generate a proof of identity for the server.
+  """
   @spec server_proof(binary(), binary(), KeyPair.t(), binary(), Keyword.t()) :: binary()
   def server_proof(
         client_proof,
@@ -299,6 +330,9 @@ defmodule SRP do
     generate_server_proof(client_proof, client_public_key, premaster_secret, options)
   end
 
+  @doc """
+  Validate the server's proof of identity.
+  """
   @spec valid_server_proof?(binary(), Identity.t(), binary(), KeyPair.t(), binary(), Keyword.t()) ::
           boolean()
   def valid_server_proof?(

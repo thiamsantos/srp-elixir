@@ -1,10 +1,35 @@
 defmodule SRP.Server do
   @moduledoc """
-  Server module.
+  Defines a SRP server.
+
+  ```elixir
+  defmodule MyApp.SRP.Server do
+    use SRP.Server
+  end
+  ```
+
+  It accepts a `prime_size` and a `hash_algorithm` as options.
+
+  ```elixir
+  defmodule MyApp.SRP.ClientWithOptions do
+    use SRP.Server, prime_size: 8192, hash_algorithm: :sha512
+  end
+  ```
   """
 
+  @doc """
+  See more information at `SRP.server_key_pair/2`.
+  """
   @callback key_pair(binary()) :: KeyPair.t()
+
+  @doc """
+  See more information at `SRP.server_proof/5`.
+  """
   @callback proof(binary(), binary(), KeyPair.t(), binary()) :: binary()
+
+  @doc """
+  See more information at `SRP.valid_client_proof?/5`.
+  """
   @callback valid_client_proof?(binary(), binary(), KeyPair.t(), binary()) :: boolean()
 
   defmacro __using__(opts \\ []) do

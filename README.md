@@ -49,7 +49,7 @@ a password verifier. Then it must send to the server:
 username = "alice"
 password = "password123"
 
-identity = SRP.Identity.new(username, password)
+identity = SRP.new_identity(username, password)
 %SRP.IdentityVerifier{username: username, salt: salt, password_verifier: password_verifier} =
   SRP.generate_verifier(identity)
 
@@ -76,7 +76,7 @@ key_pair = SRP.server_key_pair(password_verifier)
 If the username does not exist the server can send a fake value.
 It is important to not reveal if an username is registered on the system or not.
 An attacker could use the login to find the registered usernames
-and try a dictionary attack specify for those users.
+and try a dictionary attack specific for those users.
 
 3. The client generates a key pair and a client proof of identity.
 Then the client sends to the server the proof and the client's public key.
@@ -84,7 +84,7 @@ Then the client sends to the server the proof and the client's public key.
 ```elixir
 # receives from the server the server_public_key and the salt.
 
-identity = SRP.Identity.new(username, password)
+identity = SRP.new_identity(username, password)
 key_pair = SRP.client_key_pair()
 proof = SRP.client_proof(identity, salt, key_pair, server_public_key)
 
@@ -108,7 +108,7 @@ end
 This step can be skipped if you don't feel the need to verify the server's identity.
 
 ```elixir
-identity = SRP.Identity.new(username, password)
+identity = SRP.new_identity(username, password)
 valid? = SRP.valid_server_proof?(server_proof, identity, salt, client_key_pair, server_public_key)
 ```
 

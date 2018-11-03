@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Documentation.
 - This CHANGELOG file.
 - Property based tests powered by [stream_data].
 - `SRP.Client` behaviour.
