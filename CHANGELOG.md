@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## 0.1.0 - 2018-11-03
+## [0.1.0] - 2018-11-03
 ### Added
 - Documentation.
 - This CHANGELOG file.
@@ -23,5 +23,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support all prime group from [RFC 5054].
 
 [Unreleased]: https://github.com/thiamsantos/srp-elixir/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/thiamsantos/srp-elixir/tree/v0.1.0
 [stream_data]: https://hex.pm/packages/stream_data
 [RFC 5054]: https://tools.ietf.org/html/rfc5054
