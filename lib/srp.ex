@@ -540,7 +540,13 @@ defmodule SRP do
 
     %Group{prime: prime, prime_length: prime_length, generator: generator} = Group.get(prime_size)
 
-    scrambling = hash(hash_algorithm, String.pad_leading(client_key_pair.public, prime_length) <> String.pad_leading(server_public_key, prime_length))
+    scrambling =
+      hash(
+        hash_algorithm,
+        String.pad_leading(client_key_pair.public, prime_length) <>
+          String.pad_leading(server_public_key, prime_length)
+      )
+
     multiplier = hash(hash_algorithm, prime <> String.pad_leading(generator, prime_length))
     credentials = hash(hash_algorithm, salt <> hash(hash_algorithm, username <> ":" <> password))
 
@@ -564,7 +570,12 @@ defmodule SRP do
 
     %Group{prime: prime, prime_length: prime_length} = Group.get(prime_size)
 
-    scrambling = hash(hash_algorithm, String.pad_leading(client_public_key, prime_length) <> String.pad_leading(server_key_pair.public, prime_length))
+    scrambling =
+      hash(
+        hash_algorithm,
+        String.pad_leading(client_public_key, prime_length) <>
+          String.pad_leading(server_key_pair.public, prime_length)
+      )
 
     mod_pow(
       mult(
