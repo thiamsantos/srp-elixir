@@ -144,7 +144,8 @@ defmodule SRP do
   Almost all of the srp function below accept the following options:
 
   - `:prime_size` - The size of the prime to be used on the calculations (default: `2048`);
-  - `:hash_algorithm` - The hash algorithm used to derive several values (default: `:sha`)
+  - `:hash_algorithm` - The hash algorithm used to derive several values (default: `:sha`);
+  - `:random_bytes` - Quantity of random bytes used internally (default: `32`)
 
   """
 
@@ -152,7 +153,7 @@ defmodule SRP do
   alias SRP.{Group, Identity, IdentityVerifier, KeyPair}
   require SRP.Group
 
-  @default_options [prime_size: 2048, hash_algorithm: :sha]
+  @default_options [prime_size: 2048, hash_algorithm: :sha, random_bytes: 32]
 
   @doc """
   Generate a identity verifier that should be passed to the server during account creation.
@@ -197,10 +198,11 @@ defmodule SRP do
     options = Keyword.merge(@default_options, options)
     prime_size = Keyword.get(options, :prime_size)
     hash_algorithm = Keyword.get(options, :hash_algorithm)
+    random_bytes = Keyword.get(options, :random_bytes)
 
     %Group{prime: prime, generator: generator} = Group.get(prime_size)
 
-    salt = random()
+    salt = random(random_bytes)
     credentials = hash(hash_algorithm, salt <> hash(hash_algorithm, username <> ":" <> password))
     password_verifier = mod_pow(generator, credentials, prime)
 
@@ -268,11 +270,12 @@ defmodule SRP do
     options = Keyword.merge(@default_options, options)
     prime_size = Keyword.get(options, :prime_size)
     hash_algorithm = Keyword.get(options, :hash_algorithm)
+    random_bytes = Keyword.get(options, :random_bytes)
 
     %Group{prime: prime, generator: generator} = Group.get(prime_size)
 
     multiplier = hash(hash_algorithm, prime <> generator)
-    private_key = random()
+    private_key = random(random_bytes)
 
     public_key =
       add(
@@ -323,10 +326,11 @@ defmodule SRP do
   def client_key_pair(options \\ []) do
     options = Keyword.merge(@default_options, options)
     prime_size = Keyword.get(options, :prime_size)
+    random_bytes = Keyword.get(options, :random_bytes)
 
     %Group{prime: prime, generator: generator} = Group.get(prime_size)
 
-    private_key = random()
+    private_key = random(random_bytes)
     public_key = mod_pow(generator, private_key, prime)
 
     %KeyPair{private: private_key, public: public_key}
@@ -605,7 +609,7 @@ defmodule SRP do
     :crypto.hash(type, value)
   end
 
-  defp random do
-    :crypto.strong_rand_bytes(256)
+  defp random(bytes_quantity) when is_integer(bytes_quantity) do
+    :crypto.strong_rand_bytes(bytes_quantity)
   end
 end

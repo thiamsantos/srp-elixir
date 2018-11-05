@@ -54,8 +54,14 @@ defmodule SRPTest do
                 password <- StreamData.string(:alphanumeric),
                 hash_algorithm <-
                   StreamData.member_of([:sha224, :sha256, :sha384, :sha, :md5, :md4, :sha512]),
-                prime_size <- StreamData.member_of(Group.valid_sizes()) do
-        options = [hash_algorithm: hash_algorithm, prime_size: prime_size]
+                prime_size <- StreamData.member_of(Group.valid_sizes()),
+                random_bytes <- StreamData.integer(32..2048) do
+        options = [
+          hash_algorithm: hash_algorithm,
+          prime_size: prime_size,
+          random_bytes: random_bytes
+        ]
+
         identity = SRP.new_identity(username, password)
 
         register = SRP.generate_verifier(identity, options)
