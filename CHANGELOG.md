@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Change default random size to 32 bytes (256 bits).
+- Leftpad parameters.
 
 ## [0.1.1] - 2018-11-03
 ### Added

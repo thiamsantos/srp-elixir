@@ -272,9 +272,9 @@ defmodule SRP do
     hash_algorithm = Keyword.get(options, :hash_algorithm)
     random_bytes = Keyword.get(options, :random_bytes)
 
-    %Group{prime: prime, generator: generator} = Group.get(prime_size)
+    %Group{prime: prime, prime_length: prime_length, generator: generator} = Group.get(prime_size)
 
-    multiplier = hash(hash_algorithm, prime <> generator)
+    multiplier = hash(hash_algorithm, prime <> String.pad_leading(generator, prime_length))
     private_key = random(random_bytes)
 
     public_key =
@@ -538,10 +538,10 @@ defmodule SRP do
     prime_size = Keyword.get(options, :prime_size)
     hash_algorithm = Keyword.get(options, :hash_algorithm)
 
-    %Group{prime: prime, generator: generator} = Group.get(prime_size)
+    %Group{prime: prime, prime_length: prime_length, generator: generator} = Group.get(prime_size)
 
-    scrambling = hash(hash_algorithm, client_key_pair.public <> server_public_key)
-    multiplier = hash(hash_algorithm, prime <> generator)
+    scrambling = hash(hash_algorithm, String.pad_leading(client_key_pair.public, prime_length) <> String.pad_leading(server_public_key, prime_length))
+    multiplier = hash(hash_algorithm, prime <> String.pad_leading(generator, prime_length))
     credentials = hash(hash_algorithm, salt <> hash(hash_algorithm, username <> ":" <> password))
 
     mod_pow(
@@ -562,9 +562,9 @@ defmodule SRP do
     prime_size = Keyword.get(options, :prime_size)
     hash_algorithm = Keyword.get(options, :hash_algorithm)
 
-    %Group{prime: prime} = Group.get(prime_size)
+    %Group{prime: prime, prime_length: prime_length} = Group.get(prime_size)
 
-    scrambling = hash(hash_algorithm, client_public_key <> server_key_pair.public)
+    scrambling = hash(hash_algorithm, String.pad_leading(client_public_key, prime_length) <> String.pad_leading(server_key_pair.public, prime_length))
 
     mod_pow(
       mult(

@@ -1,6 +1,6 @@
 defmodule SRP.Group do
   @moduledoc false
-  defstruct [:prime, :generator]
+  defstruct [:prime, :generator, :prime_length]
 
   @groups [
     {
@@ -180,11 +180,13 @@ defmodule SRP.Group do
       |> Base.decode16!()
 
     encoded_generator = :binary.encode_unsigned(generator)
+    prime_length = String.length(decoded_prime)
 
     def get(unquote(size)) do
       %__MODULE__{
         prime: unquote(decoded_prime),
-        generator: unquote(encoded_generator)
+        generator: unquote(encoded_generator),
+        prime_length: unquote(prime_length)
       }
     end
   end
